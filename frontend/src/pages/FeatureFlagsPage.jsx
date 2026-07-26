@@ -4,7 +4,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/ToastProvider';
 import { createFlag, deleteFlag, getFlags, updateFlag } from '../services/api';
 
-const initialForm = { key: '', description: '', enabled: true, default_value: false };
+const initialForm = { key: '', description: '', enabled: true, default_value: false, rollout_percentage: 100 };
 
 const FeatureFlagsPage = () => {
   const [flags, setFlags] = useState([]);
@@ -108,6 +108,31 @@ const FeatureFlagsPage = () => {
               <input type="checkbox" checked={form.default_value} onChange={(e) => setForm({ ...form, default_value: e.target.checked })} />
               Default value
             </label>
+
+            {/* Rollout Percentage */}
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Rollout Percentage</label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={form.rollout_percentage}
+                  onChange={(e) => setForm({ ...form, rollout_percentage: Number(e.target.value) })}
+                  className="flex-1"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.rollout_percentage}
+                  onChange={(e) => setForm({ ...form, rollout_percentage: Number(e.target.value) })}
+                  className="w-20 rounded-xl border border-slate-800 bg-slate-950/70 px-2 py-1 text-center"
+                />
+                <span className="text-slate-400 text-sm">%</span>
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <button disabled={submitting} className="flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-70">
                 {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
@@ -135,37 +160,90 @@ const FeatureFlagsPage = () => {
                 <tr>
                   <th className="px-4 py-3">Key</th>
                   <th className="px-4 py-3">Description</th>
-                  <th className="px-4 py-3">Default</th>
+                                    <th className="px-4 py-3">Default</th>
                   <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Rollout %</th>
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {loading ? <tr><td colSpan="5" className="px-4 py-6 text-slate-400">Loading flags…</td></tr> : filteredFlags.map((flag) => (
-                  <tr key={flag.id} className="border-t border-slate-800 bg-slate-900/60">
-                    <td className="px-4 py-3 font-medium">{flag.key}</td>
-                    <td className="px-4 py-3">{flag.description}</td>
-                    <td className="px-4 py-3">{flag.default_value ? 'On' : 'Off'}</td>
-                    <td className="px-4 py-3">
-                      <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${flag.enabled ? 'bg-emerald-500/15 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
-                        <ToggleLeft className="h-4 w-4" /> {flag.enabled ? 'Enabled' : 'Disabled'}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => { setEditingId(flag.id); setForm({ key: flag.key, description: flag.description, enabled: flag.enabled, default_value: flag.default_value }); }} className="rounded-xl border border-slate-700 p-2 text-slate-300"><Pencil className="h-4 w-4" /></button>
-                        <button onClick={() => confirmDelete(flag.id)} className="rounded-xl border border-rose-500/20 p-2 text-rose-300"><Trash2 className="h-4 w-4" /></button>
-                      </div>
+                {loading ? (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-6 text-slate-400">
+                      Loading flags…
                     </td>
                   </tr>
-                ))}
+                ) : filteredFlags.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="px-4 py-6 text-slate-400">
+                      No flags found.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredFlags.map((flag) => (
+                    <tr key={flag.id} className="border-t border-slate-800 bg-slate-900/60">
+                      <td className="px-4 py-3 font-medium">{flag.key}</td>
+                      <td className="px-4 py-3">{flag.description}</td>
+                      <td className="px-4 py-3">{flag.default_value ? 'On' : 'Off'}</td>
+                      <td className="px-4 py-3">
+                        <div
+                          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${
+                            flag.enabled
+                              ? 'bg-emerald-500/15 text-emerald-400'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}
+                        >
+                          <ToggleLeft className="h-4 w-4" /> {flag.enabled ? 'Enabled' : 'Disabled'}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">{flag.rollout_percentage}%</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingId(flag.id);
+                              setForm({
+                                key: flag.key,
+                                description: flag.description,
+                                enabled: flag.enabled,
+                                default_value: flag.default_value,
+                                rollout_percentage:
+                                  flag.rollout_percentage !== undefined
+                                    ? flag.rollout_percentage
+                                    : 100,
+                              });
+                            }}
+                            className="rounded-xl border border-slate-700 p-2 text-slate-300"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => confirmDelete(flag.id)}
+                            className="rounded-xl border border-rose-500/20 p-2 text-rose-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <ConfirmDialog open={confirmOpen} title="Delete flag" message="This action cannot be undone. Continue?" onConfirm={handleDelete} onCancel={() => { setConfirmOpen(false); setTargetId(null); }} />
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete flag"
+        message="This action cannot be undone. Continue?"
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setTargetId(null);
+        }}
+      />
     </div>
   );
 };

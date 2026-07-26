@@ -75,5 +75,37 @@ export const updateOverride = async (id, payload) => api.put(`/overrides/${id}`,
 export const deleteOverride = async (id) => api.delete(`/overrides/${id}`);
 
 export const getAuditLogs = async () => api.get('/audit-logs/');
+export const getRedisStatus = () => api.get("/redis/status");
+
+// =========================
+// User Groups APIs
+// =========================
+
+export const getGroups = async () => api.get('/groups/');
+
+export const createGroup = async (payload) =>
+  api.post('/groups/', payload);
+
+export const updateGroup = async (id, payload) =>
+  api.put(`/groups/${id}`, payload);
+
+export const deleteGroup = async (id) =>
+  api.delete(`/groups/${id}`);
+
+export const addUserToGroup = async (payload) =>
+  api.post('/groups/add-user', payload);
+
+// =========================
+// Targeting Rules APIs
+// =========================
+
+export const getTargetingRules = async () =>
+  api.get('/targeting-rules/');
+
+export const createTargetingRule = async (payload) =>
+  api.post('/targeting-rules/', payload);
+
+export const deleteTargetingRule = async (id) =>
+  api.delete(`/targeting-rules/${id}`);
 
 export default api;

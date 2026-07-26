@@ -10,6 +10,8 @@ import {
   Moon,
   Sun,
   Menu,
+  Users,
+  UserCheck,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -20,7 +22,9 @@ const navItems = [
   { to: '/environments', label: 'Environments', icon: Layers3 },
   { to: '/overrides', label: 'Overrides', icon: ToggleLeft },
   { to: '/audit-logs', label: 'Audit Logs', icon: FileText },
-  { to: '/profile', label: 'Profile', icon: User },
+  { to: '/group-management', label: 'Group Management', icon: Users },
+  { to: '/group-members', label: 'Group Members', icon: Users },
+  { to: '/targeting-rules', label: 'Targeting Rules', icon: UserCheck },
 ];
 
 const Layout = () => {
@@ -68,7 +72,7 @@ const Layout = () => {
     <div className="min-h-screen bg-slate-950 text-slate-100 transition-colors dark:bg-slate-950 dark:text-slate-100">
       <div className="flex min-h-screen">
         <aside
-          className={`fixed inset-y-0 left-0 z-30 w-72 transform border-r border-slate-800 bg-slate-900/95 p-6 backdrop-blur-xl transition-transform lg:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 z-30 flex w-72 flex-col transform border-r border-slate-800 bg-slate-900/95 p-6 backdrop-blur-xl transition-transform lg:translate-x-0 ${
             mobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
@@ -82,7 +86,7 @@ const Layout = () => {
             </div>
           </div>
 
-          <nav className="space-y-2">
+          <nav className="flex-1 space-y-2">
             {navItems.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
@@ -102,13 +106,29 @@ const Layout = () => {
             ))}
           </nav>
 
-          <button
-            onClick={logout}
-            className="mt-10 flex w-full items-center gap-3 rounded-xl border border-slate-800 px-4 py-3 text-sm text-slate-300 transition hover:bg-slate-800"
-          >
-            <LogOut className="h-5 w-5" />
-            Logout
-          </button>
+          <div className="space-y-2 border-t border-slate-800 pt-4">
+  <NavLink
+    to="/profile"
+    className={({ isActive }) =>
+      `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+        isActive
+          ? 'bg-cyan-500/20 text-cyan-300'
+          : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+      }`
+    }
+  >
+    <User className="h-5 w-5" />
+    Profile
+  </NavLink>
+
+  <button
+    onClick={logout}
+    className="flex w-full items-center gap-3 rounded-xl border border-slate-800 px-4 py-3 text-sm text-slate-300 transition hover:bg-slate-800"
+  >
+    <LogOut className="h-5 w-5" />
+    Logout
+  </button>
+</div>
         </aside>
 
         <div className="flex-1 lg:ml-72">

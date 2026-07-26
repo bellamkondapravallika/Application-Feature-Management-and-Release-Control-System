@@ -18,3 +18,7 @@ class UserResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
+
+class AssignGroup(BaseModel):
+    user_id: int
+    group_id: int

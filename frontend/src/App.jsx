@@ -11,6 +11,9 @@ import OverridesPage from './pages/OverridesPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import ProfilePage from './pages/ProfilePage';
 import NotFoundPage from './pages/NotFoundPage';
+import GroupManagementPage from './pages/GroupManagementPage';
+import GroupMembersPage from './pages/GroupMembersPage';
+import TargetingRulesPage from './pages/TargetingRulesPage';
 
 const App = () => {
   return (
@@ -26,6 +29,9 @@ const App = () => {
           <Route path="overrides" element={<OverridesPage />} />
           <Route path="audit-logs" element={<AuditLogsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="group-management" element={<GroupManagementPage />} />
+          <Route path="group-members" element={<GroupMembersPage />} />
+          <Route path="targeting-rules" element={<TargetingRulesPage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

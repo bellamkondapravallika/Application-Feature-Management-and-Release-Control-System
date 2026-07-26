@@ -4,8 +4,11 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { useToast } from '../components/ToastProvider';
 import { evaluateFlag, getEnvironments, getFlags, getOverrides } from '../services/api';
+import { useNavigate } from "react-router-dom";
+import { getRedisStatus } from "../services/api";
 
 const DashboardPage = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -14,20 +17,31 @@ const DashboardPage = () => {
   const [evaluation, setEvaluation] = useState({ flag_key: '', environment: 'production' });
   const [evaluationResult, setEvaluationResult] = useState(null);
   const [evaluating, setEvaluating] = useState(false);
+
+  // New state for Feature Flag Evaluation Tester
+  const [tester, setTester] = useState({ flag_key: '', environment: 'production', user_id: '', groups: '' });
+  const [testerResult, setTesterResult] = useState(null);
+  const [testerLoading, setTesterLoading] = useState(false);
+  const [redisStatus, setRedisStatus] = useState(null);
+
+
   const { addToast } = useToast();
 
   const loadDashboard = async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
     try {
-      const [flagsRes, environmentsRes, overridesRes] = await Promise.all([
+      const [flagsRes, environmentsRes, overridesRes, redisRes] = await Promise.all([
         getFlags(),
         getEnvironments(),
         getOverrides(),
+        getRedisStatus(),
       ]);
 
       const flags = flagsRes.data || [];
       const environments = environmentsRes.data || [];
       const overrides = overridesRes.data || [];
+      const redis = redisRes.data || null;
+      setRedisStatus(redis);
 
       setStats([
         { label: 'Total Feature Flags', value: flags.length, icon: Boxes, accent: 'from-cyan-500 to-blue-500' },
@@ -95,6 +109,29 @@ const DashboardPage = () => {
     }
   };
 
+  const handleTesterEvaluation = async (e) => {
+    e.preventDefault();
+    if (!tester.flag_key || !tester.environment || !tester.user_id) {
+      addToast('Please enter flag key, environment, and user ID.', 'error');
+      return;
+    }
+
+    setTesterLoading(true);
+    try {
+      const payload = {
+        ...tester,
+        groups: tester.groups ? tester.groups.split(',').map(g => g.trim()) : []
+      };
+      const response = await evaluateFlag(payload);
+      setTesterResult(response.data);
+      addToast('Feature evaluation completed successfully.', 'success');
+    } catch (error) {
+      addToast(error.response?.data?.detail || 'Unable to evaluate feature.', 'error');
+    } finally {
+      setTesterLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl">
@@ -112,7 +149,35 @@ const DashboardPage = () => {
           </div>
         </div>
       </div>
+      <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+  <button onClick={() => navigate("/feature-flags")} className="rounded-xl bg-cyan-600 p-3">
+    Feature Flags
+  </button>
 
+  <button onClick={() => navigate("/environments")} className="rounded-xl bg-violet-600 p-3">
+    Environments
+  </button>
+
+  <button onClick={() => navigate("/overrides")} className="rounded-xl bg-emerald-600 p-3">
+    Overrides
+  </button>
+
+  <button onClick={() => navigate("/group-management")} className="rounded-xl bg-orange-600 p-3">
+    Groups
+  </button>
+
+  <button onClick={() => navigate("/group-members")} className="rounded-xl bg-pink-600 p-3">
+    Group Members
+  </button>
+
+  <button onClick={() => navigate("/targeting-rules")} className="rounded-xl bg-indigo-600 p-3">
+    Targeting Rules
+  </button>
+
+  <button onClick={() => navigate("/audit-logs")} className="rounded-xl bg-red-600 p-3">
+    Audit Logs
+  </button>
+</div>
       {loading ? <LoadingSpinner label="Loading dashboard data" /> : (
         <div className="grid gap-4 md:grid-cols-3">
           {stats.map(({ label, value, icon: Icon, accent }) => (
@@ -173,6 +238,82 @@ const DashboardPage = () => {
         </div>
       </div>
 
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg">
+        <h3 className="text-lg font-semibold">Feature Flag Evaluation Tester</h3>
+        <form onSubmit={handleTesterEvaluation} className="mt-4 space-y-3">
+          <input
+            value={tester.flag_key}
+            onChange={(e) => setTester({ ...tester, flag_key: e.target.value })}
+            className="w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2"
+            placeholder="flag key"
+          />
+          <input
+            value={tester.environment}
+            onChange={(e) => setTester({ ...tester, environment: e.target.value })}
+            className="w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2"
+            placeholder="environment"
+          />
+          <input
+            value={tester.user_id}
+            onChange={(e) => setTester({ ...tester, user_id: e.target.value })}
+            className="w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2"
+            placeholder="user id"
+          />
+          <input
+            value={tester.groups}
+            onChange={(e) => setTester({ ...tester, groups: e.target.value })}
+            className="w-full rounded-xl border border-slate-800 bg-slate-950/70 px-3 py-2"
+            placeholder="groups (comma-separated)"
+          />
+          <button
+            disabled={testerLoading}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {testerLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+            Evaluate Feature
+          </button>
+        </form>
+
+        <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm text-slate-400">
+          {testerResult === null ? (
+            'Run a feature evaluation to see detailed results.'
+          ) : (
+            <div className="space-y-2">
+              <p><span className="font-medium text-white">Feature Enabled:</span> {testerResult.value ? 'True' : 'False'}</p>
+              <p><span className="font-medium text-white">Evaluation Reason:</span> {testerResult.reason}</p>
+              <p><span className="font-medium text-white">User Bucket:</span> {testerResult.bucket}</p>
+              <p><span className="font-medium text-white">Rollout Percentage:</span> {testerResult.rollout_percentage}%</p>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-lg">
+  <h3 className="text-lg font-semibold mb-4">Redis Cache Status</h3>
+
+  {redisStatus ? (
+    <div className="space-y-2">
+      <p>
+        <span className="font-medium text-white">Status:</span>{" "}
+        <span className={redisStatus.status === "Connected" ? "text-green-400" : "text-red-400"}>
+          {redisStatus.status}
+        </span>
+      </p>
+
+      <p>
+        <span className="font-medium text-white">Cache:</span>{" "}
+        {redisStatus.cache_enabled ? "Enabled" : "Disabled"}
+      </p>
+
+      <p>
+        <span className="font-medium text-white">TTL:</span>{" "}
+        {redisStatus.ttl} seconds
+      </p>
+    </div>
+  ) : (
+    <p>Loading Redis status...</p>
+  )}
+</div>
+
       <ConfirmDialog
         open={confirmOpen}
         title="Reset preview state"
@@ -180,6 +321,7 @@ const DashboardPage = () => {
         onConfirm={() => {
           setConfirmOpen(false);
           setEvaluationResult(null);
+          setTesterResult(null);
           addToast('Preview state reset', 'info');
         }}
         onCancel={() => setConfirmOpen(false)}

@@ -9,3 +9,4 @@ class FeatureFlag(Base):
     description = Column(String)
     enabled = Column(Boolean, default=True)
     default_value = Column(Boolean, default=False)
+    rollout_percentage = Column(Integer, default=100)
