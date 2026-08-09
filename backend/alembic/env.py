@@ -7,6 +7,12 @@ from alembic import context
 from app.database import Base
 from app.models import environment, feature_flag, environment_override, audit_log
 from app.models import user
+from app.models.user import User
+from app.models.user_group import UserGroup
+from app.models.feature_flag import FeatureFlag
+from app.models.environment import Environment
+from app.models.audit_log import AuditLog
+from app.models.targeting_rule import TargetingRule
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

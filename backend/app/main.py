@@ -9,8 +9,16 @@ from app.routers import auth, audit_log, environment, environment_override, feat
 from app.routers import user_group
 from app.routers import targeting_rule
 from app.routers import redis
+from feature_flag_sdk.middleware import FeatureFlagMiddleware
+from fastapi import Request
+from app.models.user import User
+from app.models.feature_flag import FeatureFlag
+from app.models.audit_log import AuditLog
+from app.models.user_group import UserGroup
+from app.routers import analytics
 
 app = FastAPI()
+app.add_middleware(FeatureFlagMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -31,8 +39,22 @@ app.include_router(audit_log.router)
 app.include_router(user_group.router)
 app.include_router(targeting_rule.router)
 app.include_router(redis.router)
-
+app.include_router(analytics.router)
 
 @app.get("/")
 def home():
     return {"message": "Feature Flag System is Running"}
+
+
+
+@app.get("/sdk-test")
+async def sdk_test(request: Request):
+    result = request.state.flag_client.is_enabled(
+        flag_key="new_dashboard",
+        user_id="user_101",
+        environment="production"
+    )
+
+    return {
+        "feature_enabled": result
+    }

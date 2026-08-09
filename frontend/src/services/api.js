@@ -76,7 +76,14 @@ export const deleteOverride = async (id) => api.delete(`/overrides/${id}`);
 
 export const getAuditLogs = async () => api.get('/audit-logs/');
 export const getRedisStatus = () => api.get("/redis/status");
+export const getAnalyticsSummary = () =>
+  api.get("/analytics/summary");
 
+export const getAnalyticsFlags = () =>
+  api.get("/analytics/flags");
+
+export const getAnalyticsUsage = () =>
+  api.get("/analytics/usage");
 // =========================
 // User Groups APIs
 // =========================

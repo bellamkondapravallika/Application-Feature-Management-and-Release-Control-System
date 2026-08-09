@@ -9,3 +9,4 @@ class UserGroup(Base):
     group_name = Column(String, unique=True, nullable=False)
 
     users = relationship("User", back_populates="group")
+    print("UserGroup model loaded successfully.")

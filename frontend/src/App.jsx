@@ -10,10 +10,14 @@ import EnvironmentsPage from './pages/EnvironmentsPage';
 import OverridesPage from './pages/OverridesPage';
 import AuditLogsPage from './pages/AuditLogsPage';
 import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
+import NotificationsPage from './pages/NotificationsPage';
 import NotFoundPage from './pages/NotFoundPage';
 import GroupManagementPage from './pages/GroupManagementPage';
 import GroupMembersPage from './pages/GroupMembersPage';
 import TargetingRulesPage from './pages/TargetingRulesPage';
+import SDKDocumentationPage from "./pages/SDKDocumentationPage";
+import IntegrationExamplePage from "./pages/IntegrationExamplePage";
 
 const App = () => {
   return (
@@ -29,12 +33,17 @@ const App = () => {
           <Route path="overrides" element={<OverridesPage />} />
           <Route path="audit-logs" element={<AuditLogsPage />} />
           <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
           <Route path="group-management" element={<GroupManagementPage />} />
           <Route path="group-members" element={<GroupMembersPage />} />
           <Route path="targeting-rules" element={<TargetingRulesPage />} />
+          <Route path="/sdk-documentation" element={<SDKDocumentationPage />} />
+          <Route path="/integration-examples" element={<IntegrationExamplePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
+      
     </ToastProvider>
   );
 };

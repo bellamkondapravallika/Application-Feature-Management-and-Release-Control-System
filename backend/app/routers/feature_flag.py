@@ -8,6 +8,8 @@ from app.routers.audit_log import log_audit_action
 from app.schemas.feature_flag import FeatureFlagCreate, FeatureFlagResponse, FlagEvaluationRequest, FlagEvaluationResponse
 from app.services.evaluation import evaluate_flag
 from app.services.cache import delete_cache
+from app.routers.audit_log import log_audit_action
+from app.models.environment import Environment
 
 router = APIRouter(prefix="/flags", tags=["Feature Flags"])
 
@@ -35,12 +37,15 @@ def create_flag(
     db.add(new_flag)
     db.commit()
     db.refresh(new_flag)
+    
     log_audit_action(
-        db,
-        action="create_flag",
-        performed_by=current_user["email"],
-        new_value=f"{new_flag.key}:{new_flag.default_value}",
-    )
+    db=db,
+    action="Create Flag",
+    performed_by=current_user["email"],
+    flag_id=new_flag.id,
+    new_state=str(new_flag.default_value)
+)
+
 
     return new_flag
 
@@ -78,12 +83,14 @@ def update_flag(
     db.commit()
     db.refresh(existing_flag)
     log_audit_action(
-        db,
-        action="update_flag",
-        performed_by=current_user["email"],
-        old_value=f"{flag_id}:{existing_flag.key}",
-        new_value=f"{existing_flag.key}:{existing_flag.default_value}",
-    )
+    db=db,
+    action="Update Flag",
+    performed_by=current_user["email"],
+    flag_id=existing_flag.id,
+    old_state=str(existing_flag.enabled),
+    new_state=str(existing_flag.enabled)
+)
+    
     delete_cache(f"flag:{existing_flag.key}:*")  
     return existing_flag
 
@@ -97,11 +104,12 @@ def delete_flag(flag_id: int, db: Session = Depends(get_db), current_user: dict 
     db.delete(flag)
     db.commit()
     log_audit_action(
-        db,
-        action="delete_flag",
-        performed_by=current_user["email"],
-        old_value=str(flag_id),
-    )
+    db=db,
+    action="Delete Flag",
+    performed_by=current_user["email"],
+    flag_id=flag.id,
+    old_state=str(flag.default_value)
+)
     delete_cache(f"flag:{flag.key}:*")
     return {"message": "Feature Flag deleted successfully"}
     
@@ -113,13 +121,42 @@ def evaluate_feature_flag(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user),
 ):
-    result = evaluate_flag(request.flag_key, request.environment, request.user_id, request.groups, db)
+    result = evaluate_flag(
+        request.flag_key,
+        request.environment,
+        request.user_id,
+        request.groups,
+        db
+    )
+
     if "error" in result:
         raise HTTPException(status_code=404, detail=result["error"])
+
+    # Find flag
+    flag = db.query(FeatureFlag).filter(
+        FeatureFlag.key == request.flag_key
+    ).first()
+
+    # Find environment
+    environment = db.query(Environment).filter(
+        Environment.name == request.environment
+    ).first()
+
+    # Save evaluation audit log
     log_audit_action(
-        db,
-        action="evaluate_flag",
+        db=db,
+        action="Evaluate Flag",
         performed_by=current_user["email"],
-        new_value=f"{request.flag_key}:{request.environment}",
+        flag_id=flag.id if flag else None,
+        environment_id=environment.id if environment else None,
+        old_state=None,
+        new_state=f"{request.flag_key}:{request.environment}",
     )
-    return FlagEvaluationResponse(flag_key=result["flag_key"], enabled=result["enabled"], reason=result["reason"], bucket=result["bucket"], rollout_percentage=result["rollout_percentage"])
+
+    return FlagEvaluationResponse(
+        flag_key=result["flag_key"],
+        enabled=result["enabled"],
+        reason=result["reason"],
+        bucket=result["bucket"],
+        rollout_percentage=result["rollout_percentage"]
+    )

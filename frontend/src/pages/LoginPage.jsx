@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ShieldCheck, LoaderCircle, Mail, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/ToastProvider';
 import { getErrorMessage, login } from '../services/api';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -16,7 +18,7 @@ const LoginPage = () => {
     e.preventDefault();
 
     if (!formData.username || !formData.password) {
-      addToast('Please enter both your email and password.', 'error');
+      addToast(t('login.missingFields'), 'error');
       return;
     }
 
@@ -25,10 +27,10 @@ const LoginPage = () => {
       const response = await login(formData);
       localStorage.setItem('access_token', response.data.access_token);
       localStorage.setItem('user_email', formData.username);
-      addToast('Signed in successfully', 'success');
+      addToast(t('login.success'), 'success');
       navigate('/dashboard');
     } catch (error) {
-      addToast(getErrorMessage(error, 'Unable to sign in right now.'), 'error');
+      addToast(getErrorMessage(error, t('login.error')), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -54,18 +56,18 @@ const LoginPage = () => {
               <div className="mb-6 inline-flex rounded-2xl bg-white/10 p-3 text-cyan-300">
                 <ShieldCheck className="h-8 w-8" />
               </div>
-              <h2 className="text-3xl font-bold text-white">Application Feature Management</h2>
+              <h2 className="text-3xl font-bold text-white">{t('login.brandTitle')}</h2>
               <p className="mt-3 text-slate-300 text-lg">
-                Release Control System for modern teams.
+                {t('login.brandDescription')}
               </p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 text-sm text-slate-300 space-y-3">
-              <p className="font-semibold text-white text-lg">Feature Highlights</p>
+              <p className="font-semibold text-white text-lg">{t('login.featureHighlights')}</p>
               <ul className="space-y-2 list-disc list-inside">
-                <li>Feature Flag Management</li>
-                <li>Environment Management</li>
-                <li>Secure Authentication</li>
-                <li>Audit Logs</li>
+                <li>{t('login.highlightFeatureFlags')}</li>
+                <li>{t('login.highlightEnvironments')}</li>
+                <li>{t('login.highlightSecurity')}</li>
+                <li>{t('login.highlightAuditLogs')}</li>
               </ul>
             </div>
           </motion.div>
@@ -77,20 +79,20 @@ const LoginPage = () => {
             transition={{ duration: 0.7, ease: 'easeOut' }}
             className="p-8 sm:p-12 flex flex-col justify-center"
           >
-            <h1 className="text-3xl font-bold text-white">Sign in</h1>
-            <p className="mt-2 text-sm text-slate-400">Access your feature flag workspace</p>
+            <h1 className="text-3xl font-bold text-white">{t('login.title')}</h1>
+            <p className="mt-2 text-sm text-slate-400">{t('login.subtitle')}</p>
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-6">
               {/* Email Field */}
               <div>
-                <label className="mb-2 block text-sm text-slate-300">Email</label>
+                <label className="mb-2 block text-sm text-slate-300">{t('login.emailLabel')}</label>
                 <div className="flex items-center rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 focus-within:ring-2 focus-within:ring-cyan-500">
                   <Mail className="h-5 w-5 text-slate-400 mr-3" />
                   <input
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     className="w-full bg-transparent outline-none text-white placeholder-slate-500"
-                    placeholder="admin@example.com"
+                    placeholder={t('login.emailPlaceholder')}
                     type="email"
                   />
                 </div>
@@ -98,7 +100,7 @@ const LoginPage = () => {
 
               {/* Password Field */}
               <div>
-                <label className="mb-2 block text-sm text-slate-300">Password</label>
+                <label className="mb-2 block text-sm text-slate-300">{t('login.passwordLabel')}</label>
                 <div className="flex items-center rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 focus-within:ring-2 focus-within:ring-cyan-500">
                   <Lock className="h-5 w-5 text-slate-400 mr-3" />
                   <input
@@ -106,7 +108,7 @@ const LoginPage = () => {
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     type={showPassword ? 'text' : 'password'}
                     className="w-full bg-transparent outline-none text-white placeholder-slate-500"
-                    placeholder="••••••••"
+                    placeholder={t('login.passwordPlaceholder')}
                   />
                   <button
                     type="button"
@@ -126,14 +128,14 @@ const LoginPage = () => {
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-3 font-semibold text-white shadow-lg transition disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {submitting ? <LoaderCircle className="h-5 w-5 animate-spin" /> : null}
-                {submitting ? 'Signing in...' : 'Sign In'}
+                {submitting ? t('login.signingIn') : t('login.submit')}
               </motion.button>
             </form>
 
             <p className="mt-6 text-sm text-slate-400">
-              Don&apos;t have an account?{' '}
+              {t('login.noAccount')}{' '}
               <Link to="/signup" className="font-medium text-cyan-400 hover:text-cyan-300 transition">
-                Create one
+                {t('login.createAccount')}
               </Link>
             </p>
           </motion.div>
